@@ -1,0 +1,234 @@
+<div class="page">
+  <div class="row mb-3">
+    <div class="col-md">
+      <div class="card">
+        <div class="card-header text-primary">
+          <b>Multi Level Feedback Queue</b>
+          <button type="button" class="btn btn-primary btn-sm" style="position: absolute !important;
+                    top:9px; right: 9px;" (click)="addProcess()">
+            Add Process
+          </button>
+        </div>
+        <div class="card-body" style="max-height: 40vh;overflow-y: auto;">
+          <table class="table table-hover table-bordered table-sm text-center">
+            <thead>
+              <tr>
+                <th scope="col">ID</th>
+                <th scope="col">Status</th>
+                <th scope="col">Arrival Time</th>
+                <th scope="col">Execue Time</th>
+                <th scope="col">Waitting Time</th>
+                <th scope="col">I/O Time</th>
+                <th scope="col">I/O Waitting</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let x of pcb.getPCB">
+                <td>{{ x.process_Id }}</td>
+                <td [ngClass]="{
+                    'bg-success': x.status == 'Running',
+                    'bg-danger': x.status == 'Terminate',
+                    'bg-warning': x.status == 'Waitting'
+                  }">
+                  {{ x.status }}
+                </td>
+                <td>{{ x.arrival_Time }}</td>
+                <td>{{ x.execue_Time }}</td>
+                <td>{{ x.waitting_time }}</td>
+                <td>{{ x.io_Time }}</td>
+                <td>{{ x.io_waitting_time }}</td>
+                <td>
+                  <button type="button" class="btn btn-danger btn-sm"
+                    (click)="setTerminate(x.process_Id, x.ready_Queue)" [disabled]="x.status != 'Running'"
+                    [hidden]="x.status == 'Terminate'">
+                    Terminate
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <br />
+        <div class="float-rigth"></div>
+        <div style="position: relative">
+          <div class="float-left" style="margin-left: 20px;">
+            <b class="text-primary">CPU Time : </b>{{ cpuTime }}
+          </div>
+          <div class="float-right" style="margin-right: 20px;">
+            <b class="text-primary">AVG Waitting Time : </b>{{ avgWaitting | number:'1.0-0'}}
+          </div>
+        </div>
+        <div class="card-footer" style="position: relative">
+          <b class="text-primary">CPU Process : ID
+            {{ process_id ? process_id.process_Id : "Null" }}</b>
+          <button type="button" class="btn btn-danger btn-sm" style="margin-right: 60px; position: absolute !important;
+                    top:9px; right: 9px;" (click)="stopProgram()">
+            Reset
+          </button>
+          <button type="button" class="btn btn-success btn-sm" style="position: absolute !important;
+                    top:9px; right: 9px;" (click)="startProgram()" [disabled]="cpuTime > 0">
+            Start
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!--  -->
+  <div class="row">
+    <div class="col-md mb-3">
+      <div class="card">
+        <div class="card-header text-primary">
+          <b>Ready Queue</b>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md">
+              <table class="table table-hover table-bordered table-sm text-center">
+                <thead>
+                  <tr>
+                    <th scope="col">Q1<br>Quantum Time = {{this.queue.Q1_process}}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let x of queue.Q1" [hidden]="
+                      process_id ? x.process_Id == process_id.process_Id : ''
+                    ">
+                    <td>
+                      {{ x.process_Id }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="col-md">
+              <table class="table table-hover table-bordered table-sm text-center">
+                <thead>
+                  <tr>
+                    <th scope="col">Q2<br>Quantum Time = {{this.queue.Q2_process}}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let x of queue.Q2" [hidden]="
+                      process_id ? x.process_Id == process_id.process_Id : ''
+                    ">
+                    <td>
+                      {{ x.process_Id }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="col-md">
+              <table class="table table-hover table-bordered table-sm text-center">
+                <thead>
+                  <tr>
+                    <th scope="col">FCFS<br>Quantum Time = {{this.queue.FCFS_process}}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let x of queue.FCFS" [hidden]="
+                      process_id ? x.process_Id == process_id.process_Id : ''
+                    ">
+                    <td>
+                      {{ x.process_Id }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md">
+      <div class="card">
+        <div class="card-header text-primary">
+          <b>I/O Queue</b>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md">
+              <table class="table table-hover table-bordered table-sm text-center">
+                <thead>
+                  <tr>
+                    <th colspan="2">CD QUEUE</th>
+                  </tr>
+                  <tr>
+                    <td>
+                      ID
+                    </td>
+                    <td>
+                      <button type="button" class="btn btn-primary btn-sm" [disabled]="!process_id"
+                        (click)="pushIO(process_id, 'CD')">
+                        Add
+                      </button>
+                    </td>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+                <tbody *ngFor="let x of cd; let i = index">
+                  <tr *ngIf="x != null">
+                    <td>
+                      {{ x.process_Id }}
+                    </td>
+                    <td [ngClass]="{
+                        'bg-warning': x.status == 'Waitting',
+                        'bg-success': x.status == 'Running'
+                      }">
+                      <button type="button" class="btn btn-danger btn-sm" (click)="popIO(x)" *ngIf="i == 0">
+                        Close
+                      </button>
+                      <span *ngIf="i != 0">
+                        {{ x.status }}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="col-md">
+              <table class="table table-hover table-bordered table-sm text-center">
+                <thead>
+                  <tr>
+                    <th colspan="2">USB QUEUE</th>
+                  </tr>
+                  <tr>
+                    <td>
+                      ID
+                    </td>
+                    <td>
+                      <button type="button" class="btn btn-primary btn-sm" [disabled]="!process_id"
+                        (click)="pushIO(process_id, 'USB')">
+                        Add
+                      </button>
+                    </td>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+                <tbody *ngFor="let x of usb; let i = index">
+                  <tr *ngIf="x != null">
+                    <td>
+                      {{ x.process_Id }}
+                    </td>
+                    <td [ngClass]="{
+                        'bg-warning': x.status == 'Waitting',
+                        'bg-success': x.status == 'Running'
+                      }">
+                      <button type="button" class="btn btn-danger btn-sm" (click)="popIO(x)" *ngIf="i == 0">
+                        Close
+                      </button>
+                      <span *ngIf="i != 0">
+                        {{ x.status }}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
